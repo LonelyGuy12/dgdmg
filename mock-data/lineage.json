@@ -1,0 +1,63 @@
+{
+  "lineage_edges": [
+    {
+      "upstream": "urn:li:dataset:(urn:li:dataPlatform:snowflake,analytics.raw.raw_orders,PROD)",
+      "downstream": "urn:li:dataset:(urn:li:dataPlatform:dbt,analytics.staging.stg_orders,PROD)",
+      "transformationType": "DBT_MODEL",
+      "transformationQuery": "SELECT order_id, customer_id, product_id, order_date, status, (amount - discount) AS net_amount, created_at FROM {{ source('raw', 'raw_orders') }}"
+    },
+    {
+      "upstream": "urn:li:dataset:(urn:li:dataPlatform:snowflake,analytics.raw.raw_customers,PROD)",
+      "downstream": "urn:li:dataset:(urn:li:dataPlatform:dbt,analytics.staging.stg_customers,PROD)",
+      "transformationType": "DBT_MODEL",
+      "transformationQuery": "SELECT customer_id, SHA2(email, 256) AS email_hash, first_name, last_name, signup_date, country, is_active FROM {{ source('raw', 'raw_customers') }}"
+    },
+    {
+      "upstream": "urn:li:dataset:(urn:li:dataPlatform:dbt,analytics.staging.stg_orders,PROD)",
+      "downstream": "urn:li:dataset:(urn:li:dataPlatform:dbt,analytics.marts.fct_orders,PROD)",
+      "transformationType": "DBT_MODEL",
+      "transformationQuery": "SELECT o.*, (o.status != 'cancelled') AS is_active_order FROM {{ ref('stg_orders') }} o"
+    },
+    {
+      "upstream": "urn:li:dataset:(urn:li:dataPlatform:dbt,analytics.staging.stg_customers,PROD)",
+      "downstream": "urn:li:dataset:(urn:li:dataPlatform:dbt,analytics.marts.dim_customers,PROD)",
+      "transformationType": "DBT_MODEL",
+      "transformationQuery": "SELECT c.*, SUM(o.net_amount) AS lifetime_value, COUNT(o.order_id) AS total_orders FROM {{ ref('stg_customers') }} c LEFT JOIN {{ ref('stg_orders') }} o ON c.customer_id = o.customer_id GROUP BY 1,2,3,4,5,6,7"
+    },
+    {
+      "upstream": "urn:li:dataset:(urn:li:dataPlatform:dbt,analytics.staging.stg_orders,PROD)",
+      "downstream": "urn:li:dataset:(urn:li:dataPlatform:dbt,analytics.marts.dim_customers,PROD)",
+      "transformationType": "DBT_MODEL",
+      "transformationQuery": "Aggregated from stg_orders for LTV, total_orders, first/last order dates"
+    },
+    {
+      "upstream": "urn:li:dataset:(urn:li:dataPlatform:snowflake,analytics.raw.raw_products,PROD)",
+      "downstream": "urn:li:dataset:(urn:li:dataPlatform:dbt,analytics.marts.fct_orders,PROD)",
+      "transformationType": "DBT_MODEL",
+      "transformationQuery": "Product context joined via product_id in fct_orders"
+    }
+  ],
+  "column_lineage": [
+    {
+      "upstreamDataset": "raw_orders",
+      "upstreamColumn": "amount",
+      "downstreamDataset": "stg_orders",
+      "downstreamColumn": "net_amount",
+      "transformation": "amount - discount"
+    },
+    {
+      "upstreamDataset": "raw_customers",
+      "upstreamColumn": "email",
+      "downstreamDataset": "stg_customers",
+      "downstreamColumn": "email_hash",
+      "transformation": "SHA2(email, 256)"
+    },
+    {
+      "upstreamDataset": "stg_orders",
+      "upstreamColumn": "net_amount",
+      "downstreamDataset": "dim_customers",
+      "downstreamColumn": "lifetime_value",
+      "transformation": "SUM(net_amount) per customer"
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "glossary_terms": [
+    {
+      "urn": "urn:li:glossaryTerm:active_account",
+      "name": "Active Account",
+      "definition": "A customer account is considered active if the customer has placed at least one non-cancelled order within the last 90 days. Mapped to `is_active = TRUE` on the `dim_customers` and `stg_customers` tables.",
+      "relatedColumns": [
+        {"dataset": "dim_customers",  "column": "is_active"},
+        {"dataset": "stg_customers",  "column": "is_active"},
+        {"dataset": "raw_customers",  "column": "is_active"}
+      ],
+      "tags": [],
+      "owners": ["data-team@company.com"]
+    },
+    {
+      "urn": "urn:li:glossaryTerm:lifetime_value",
+      "name": "Customer Lifetime Value (LTV)",
+      "definition": "The total net revenue attributed to a customer across all their non-cancelled orders. Calculated as SUM(net_amount) from fct_orders or stg_orders where status != 'cancelled'. Exposed as `lifetime_value` column in `dim_customers`.",
+      "relatedColumns": [
+        {"dataset": "dim_customers", "column": "lifetime_value"},
+        {"dataset": "stg_orders",    "column": "net_amount"},
+        {"dataset": "fct_orders",    "column": "net_amount"}
+      ],
+      "tags": [],
+      "owners": ["data-team@company.com"]
+    },
+    {
+      "urn": "urn:li:glossaryTerm:net_revenue",
+      "name": "Net Revenue",
+      "definition": "Order revenue after applying discounts. Calculated as amount - discount from raw_orders, stored as net_amount in stg_orders and fct_orders.",
+      "relatedColumns": [
+        {"dataset": "stg_orders",  "column": "net_amount"},
+        {"dataset": "fct_orders",  "column": "net_amount"},
+        {"dataset": "raw_orders",  "column": "amount"},
+        {"dataset": "raw_orders",  "column": "discount"}
+      ],
+      "tags": [],
+      "owners": ["data-team@company.com"]
+    },
+    {
+      "urn": "urn:li:glossaryTerm:pii",
+      "name": "PII",
+      "definition": "Personally Identifiable Information — data that can be used to identify a specific individual. Columns tagged PII must not be exposed in downstream analytical marts without masking or hashing. In DataHub, PII columns include: email, phone_number, first_name, last_name.",
+      "relatedColumns": [
+        {"dataset": "raw_customers",  "column": "email"},
+        {"dataset": "raw_customers",  "column": "phone_number"},
+        {"dataset": "raw_customers",  "column": "first_name"},
+        {"dataset": "raw_customers",  "column": "last_name"},
+        {"dataset": "stg_customers",  "column": "first_name"},
+        {"dataset": "stg_customers",  "column": "last_name"},
+        {"dataset": "dim_customers",  "column": "first_name"},
+        {"dataset": "dim_customers",  "column": "last_name"}
+      ],
+      "tags": ["GOVERNANCE"],
+      "owners": ["data-governance@company.com"]
+    },
+    {
+      "urn": "urn:li:glossaryTerm:churn_risk",
+      "name": "Churn Risk",
+      "definition": "A customer is considered at risk of churning if they were active (purchased in last 90 days) but their last_order_date is more than 60 days ago. High churn risk: last_order_date between 60 and 90 days ago.",
+      "relatedColumns": [
+        {"dataset": "dim_customers", "column": "last_order_date"},
+        {"dataset": "dim_customers", "column": "is_active"}
+      ],
+      "tags": [],
+      "owners": ["data-team@company.com"]
+    },
+    {
+      "urn": "urn:li:glossaryTerm:order_status",
+      "name": "Order Status",
+      "definition": "Normalized order lifecycle state. Valid values: placed (order received, not yet shipped), shipped (order dispatched), delivered (confirmed delivery), cancelled (order voided). Only placed, shipped, delivered orders are counted in revenue metrics.",
+      "relatedColumns": [
+        {"dataset": "raw_orders",  "column": "status"},
+        {"dataset": "stg_orders",  "column": "status"},
+        {"dataset": "fct_orders",  "column": "status"}
+      ],
+      "tags": [],
+      "owners": ["data-team@company.com"]
+    },
+    {
+      "urn": "urn:li:glossaryTerm:product_category",
+      "name": "Product Category",
+      "definition": "Top-level grouping for products in the catalog. Current categories: electronics, apparel, home, beauty, sports, books. Used for segment-level revenue reporting.",
+      "relatedColumns": [
+        {"dataset": "raw_products", "column": "category"}
+      ],
+      "tags": [],
+      "owners": ["data-team@company.com"]
+    }
+  ]
+}

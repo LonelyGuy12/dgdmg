@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+httpx
+groq
+python-dotenv
+sse-starlette
+pydantic
+pyyaml
+python-slugify
+aiofiles
+pytest
+pytest-asyncio

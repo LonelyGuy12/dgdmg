@@ -1,0 +1,167 @@
+{
+  "datasets": [
+    {
+      "urn": "urn:li:dataset:(urn:li:dataPlatform:snowflake,analytics.raw.raw_orders,PROD)",
+      "name": "raw_orders",
+      "platform": "snowflake",
+      "schema": "raw",
+      "description": "Raw orders ingested from the production transactional database. Append-only, updated hourly.",
+      "freshness": "healthy",
+      "fields": [
+        {"name": "order_id",       "type": "INTEGER",   "description": "Unique order identifier (primary key)", "isPrimaryKey": true,  "isForeignKey": false, "tags": []},
+        {"name": "customer_id",    "type": "INTEGER",   "description": "References the customer who placed the order", "isPrimaryKey": false, "isForeignKey": true,  "fkTable": "raw_customers", "fkColumn": "customer_id", "tags": []},
+        {"name": "product_id",     "type": "INTEGER",   "description": "References the ordered product", "isPrimaryKey": false, "isForeignKey": true,  "fkTable": "raw_products", "fkColumn": "product_id", "tags": []},
+        {"name": "order_date",     "type": "DATE",      "description": "Date the order was placed (UTC)", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "status",         "type": "VARCHAR",   "description": "Order status: placed, shipped, delivered, cancelled", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "amount",         "type": "DECIMAL",   "description": "Order line amount in USD (before discounts)", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "discount",       "type": "DECIMAL",   "description": "Discount applied to this order line in USD", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "created_at",     "type": "TIMESTAMP", "description": "Row creation timestamp", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "updated_at",     "type": "TIMESTAMP", "description": "Row last updated timestamp", "isPrimaryKey": false, "isForeignKey": false, "tags": []}
+      ],
+      "assertions": [
+        {"type": "not_null",   "column": "order_id",   "status": "passing"},
+        {"type": "not_null",   "column": "customer_id","status": "passing"},
+        {"type": "freshness",  "column": "created_at", "status": "passing", "maxAge": "2h"}
+      ],
+      "tags": ["BRONZE", "TRANSACTIONAL"]
+    },
+    {
+      "urn": "urn:li:dataset:(urn:li:dataPlatform:snowflake,analytics.raw.raw_customers,PROD)",
+      "name": "raw_customers",
+      "platform": "snowflake",
+      "schema": "raw",
+      "description": "Raw customer data synced from CRM. Refreshed daily at midnight UTC.",
+      "freshness": "stale",
+      "fields": [
+        {"name": "customer_id",    "type": "INTEGER",   "description": "Unique customer identifier (primary key)", "isPrimaryKey": true,  "isForeignKey": false, "tags": []},
+        {"name": "email",          "type": "VARCHAR",   "description": "Customer email address", "isPrimaryKey": false, "isForeignKey": false, "tags": ["PII", "SENSITIVE"]},
+        {"name": "phone_number",   "type": "VARCHAR",   "description": "Customer phone number", "isPrimaryKey": false, "isForeignKey": false, "tags": ["PII", "SENSITIVE"]},
+        {"name": "first_name",     "type": "VARCHAR",   "description": "Customer first name", "isPrimaryKey": false, "isForeignKey": false, "tags": ["PII"]},
+        {"name": "last_name",      "type": "VARCHAR",   "description": "Customer last name", "isPrimaryKey": false, "isForeignKey": false, "tags": ["PII"]},
+        {"name": "signup_date",    "type": "DATE",      "description": "Date the customer created their account", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "country",        "type": "VARCHAR",   "description": "ISO 3166-1 alpha-2 country code", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "is_active",      "type": "BOOLEAN",   "description": "Whether the account is currently active (has ordered in last 90 days)", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "created_at",     "type": "TIMESTAMP", "description": "Row creation timestamp", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "updated_at",     "type": "TIMESTAMP", "description": "Row last updated timestamp", "isPrimaryKey": false, "isForeignKey": false, "tags": []}
+      ],
+      "assertions": [
+        {"type": "not_null",   "column": "customer_id", "status": "passing"},
+        {"type": "freshness",  "column": "updated_at",  "status": "failing", "maxAge": "24h", "lastRun": "36h ago"}
+      ],
+      "tags": ["BRONZE", "CRM", "PII"]
+    },
+    {
+      "urn": "urn:li:dataset:(urn:li:dataPlatform:snowflake,analytics.raw.raw_products,PROD)",
+      "name": "raw_products",
+      "platform": "snowflake",
+      "schema": "raw",
+      "description": "Product catalog from the e-commerce platform.",
+      "freshness": "healthy",
+      "fields": [
+        {"name": "product_id",     "type": "INTEGER",   "description": "Unique product identifier (primary key)", "isPrimaryKey": true,  "isForeignKey": false, "tags": []},
+        {"name": "product_name",   "type": "VARCHAR",   "description": "Product display name", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "category",       "type": "VARCHAR",   "description": "Product category: electronics, apparel, home, etc.", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "price",          "type": "DECIMAL",   "description": "Current list price in USD", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "cost",           "type": "DECIMAL",   "description": "Unit cost (COGS) in USD", "isPrimaryKey": false, "isForeignKey": false, "tags": ["SENSITIVE"]},
+        {"name": "is_active",      "type": "BOOLEAN",   "description": "Whether the product is currently listed", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "created_at",     "type": "TIMESTAMP", "description": "Row creation timestamp", "isPrimaryKey": false, "isForeignKey": false, "tags": []}
+      ],
+      "assertions": [],
+      "tags": ["BRONZE", "PRODUCT"]
+    },
+    {
+      "urn": "urn:li:dataset:(urn:li:dataPlatform:dbt,analytics.staging.stg_orders,PROD)",
+      "name": "stg_orders",
+      "platform": "dbt",
+      "schema": "staging",
+      "description": "Staged orders with cleaned types, renamed columns, and basic deduplication.",
+      "freshness": "healthy",
+      "fields": [
+        {"name": "order_id",       "type": "INTEGER",   "description": "Unique order identifier", "isPrimaryKey": true,  "isForeignKey": false, "tags": []},
+        {"name": "customer_id",    "type": "INTEGER",   "description": "Customer foreign key", "isPrimaryKey": false, "isForeignKey": true,  "fkTable": "stg_customers", "fkColumn": "customer_id", "tags": []},
+        {"name": "product_id",     "type": "INTEGER",   "description": "Product foreign key", "isPrimaryKey": false, "isForeignKey": true,  "fkTable": "raw_products",  "fkColumn": "product_id",  "tags": []},
+        {"name": "order_date",     "type": "DATE",      "description": "Date the order was placed", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "status",         "type": "VARCHAR",   "description": "Normalized order status", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "net_amount",     "type": "DECIMAL",   "description": "Order amount after discount (amount - discount)", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "created_at",     "type": "TIMESTAMP", "description": "Source record creation time", "isPrimaryKey": false, "isForeignKey": false, "tags": []}
+      ],
+      "assertions": [
+        {"type": "not_null", "column": "order_id",    "status": "passing"},
+        {"type": "unique",   "column": "order_id",    "status": "passing"},
+        {"type": "not_null", "column": "customer_id", "status": "passing"}
+      ],
+      "tags": ["SILVER", "STAGING"]
+    },
+    {
+      "urn": "urn:li:dataset:(urn:li:dataPlatform:dbt,analytics.staging.stg_customers,PROD)",
+      "name": "stg_customers",
+      "platform": "dbt",
+      "schema": "staging",
+      "description": "Staged customer data with PII hashed and fields renamed for downstream use.",
+      "freshness": "healthy",
+      "fields": [
+        {"name": "customer_id",    "type": "INTEGER",   "description": "Unique customer identifier", "isPrimaryKey": true,  "isForeignKey": false, "tags": []},
+        {"name": "email_hash",     "type": "VARCHAR",   "description": "SHA-256 hash of customer email (PII-safe)", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "first_name",     "type": "VARCHAR",   "description": "Customer first name", "isPrimaryKey": false, "isForeignKey": false, "tags": ["PII"]},
+        {"name": "last_name",      "type": "VARCHAR",   "description": "Customer last name", "isPrimaryKey": false, "isForeignKey": false, "tags": ["PII"]},
+        {"name": "signup_date",    "type": "DATE",      "description": "Account signup date", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "country",        "type": "VARCHAR",   "description": "Customer country code", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "is_active",      "type": "BOOLEAN",   "description": "True if customer purchased in last 90 days", "isPrimaryKey": false, "isForeignKey": false, "tags": []}
+      ],
+      "assertions": [
+        {"type": "not_null", "column": "customer_id", "status": "passing"},
+        {"type": "unique",   "column": "customer_id", "status": "passing"}
+      ],
+      "tags": ["SILVER", "STAGING"]
+    },
+    {
+      "urn": "urn:li:dataset:(urn:li:dataPlatform:dbt,analytics.marts.fct_orders,PROD)",
+      "name": "fct_orders",
+      "platform": "dbt",
+      "schema": "marts",
+      "description": "Orders fact table — grain is one row per order. Primary analytical table for revenue reporting.",
+      "freshness": "healthy",
+      "fields": [
+        {"name": "order_id",         "type": "INTEGER",   "description": "Unique order identifier (PK)", "isPrimaryKey": true,  "isForeignKey": false, "tags": []},
+        {"name": "customer_id",      "type": "INTEGER",   "description": "Customer FK → dim_customers", "isPrimaryKey": false, "isForeignKey": true,  "fkTable": "dim_customers", "fkColumn": "customer_id", "tags": []},
+        {"name": "product_id",       "type": "INTEGER",   "description": "Product FK → raw_products", "isPrimaryKey": false, "isForeignKey": true,  "fkTable": "raw_products", "fkColumn": "product_id",   "tags": []},
+        {"name": "order_date",       "type": "DATE",      "description": "Date the order was placed", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "status",           "type": "VARCHAR",   "description": "Normalized order status", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "net_amount",       "type": "DECIMAL",   "description": "Net revenue after discount", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "is_active_order",  "type": "BOOLEAN",   "description": "True if order is not cancelled", "isPrimaryKey": false, "isForeignKey": false, "tags": []}
+      ],
+      "assertions": [
+        {"type": "not_null", "column": "order_id",    "status": "passing"},
+        {"type": "unique",   "column": "order_id",    "status": "passing"},
+        {"type": "not_null", "column": "customer_id", "status": "passing"}
+      ],
+      "tags": ["GOLD", "FACT"]
+    },
+    {
+      "urn": "urn:li:dataset:(urn:li:dataPlatform:dbt,analytics.marts.dim_customers,PROD)",
+      "name": "dim_customers",
+      "platform": "dbt",
+      "schema": "marts",
+      "description": "Customer dimension — one row per customer, includes lifetime value and activity flags.",
+      "freshness": "healthy",
+      "fields": [
+        {"name": "customer_id",        "type": "INTEGER", "description": "Unique customer identifier (PK)", "isPrimaryKey": true,  "isForeignKey": false, "tags": []},
+        {"name": "first_name",         "type": "VARCHAR", "description": "Customer first name", "isPrimaryKey": false, "isForeignKey": false, "tags": ["PII"]},
+        {"name": "last_name",          "type": "VARCHAR", "description": "Customer last name", "isPrimaryKey": false, "isForeignKey": false, "tags": ["PII"]},
+        {"name": "email_hash",         "type": "VARCHAR", "description": "SHA-256 hashed email (PII-safe)", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "signup_date",        "type": "DATE",    "description": "Account creation date", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "country",            "type": "VARCHAR", "description": "Customer country code", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "is_active",          "type": "BOOLEAN", "description": "True if purchased in last 90 days (active account definition)", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "lifetime_value",     "type": "DECIMAL", "description": "Sum of all net_amount across non-cancelled orders (customer lifetime value)", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "total_orders",       "type": "INTEGER", "description": "Total number of orders placed", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "first_order_date",   "type": "DATE",    "description": "Date of the customer's first order", "isPrimaryKey": false, "isForeignKey": false, "tags": []},
+        {"name": "last_order_date",    "type": "DATE",    "description": "Date of the customer's most recent order", "isPrimaryKey": false, "isForeignKey": false, "tags": []}
+      ],
+      "assertions": [
+        {"type": "not_null", "column": "customer_id", "status": "passing"},
+        {"type": "unique",   "column": "customer_id", "status": "passing"}
+      ],
+      "tags": ["GOLD", "DIMENSION"]
+    }
+  ]
+}

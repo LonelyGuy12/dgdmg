@@ -1,0 +1,210 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@import "tailwindcss";
+
+/* ─── Design Tokens ─────────────────────────────────────────── */
+:root {
+  --bg-base: #070810;
+  --bg-surface: #0f1120;
+  --bg-card: #141728;
+  --bg-card-hover: #1a1f35;
+  --bg-elevated: #1e2440;
+  --border: #252b45;
+  --border-bright: #303760;
+
+  --accent-purple: #7c3aed;
+  --accent-blue: #2563eb;
+  --accent-cyan: #06b6d4;
+  --accent-green: #10b981;
+  --accent-orange: #f59e0b;
+  --accent-red: #ef4444;
+
+  --text-primary: #f0f2ff;
+  --text-secondary: #8892b5;
+  --text-muted: #4a5280;
+
+  --glow-purple: 0 0 40px rgba(124, 58, 237, 0.25);
+  --glow-blue: 0 0 40px rgba(37, 99, 235, 0.2);
+  --glow-green: 0 0 20px rgba(16, 185, 129, 0.2);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border-bright);
+  border-radius: 3px;
+}
+
+/* ─── Glass Cards ───────────────────────────────────────────── */
+.glass {
+  background: rgba(20, 23, 40, 0.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+}
+
+.glass-bright {
+  background: rgba(30, 36, 64, 0.8);
+  backdrop-filter: blur(24px);
+  border: 1px solid var(--border-bright);
+}
+
+/* ─── Gradient Text ─────────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 50%, #34d399 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-purple {
+  background: linear-gradient(135deg, #c084fc 0%, #818cf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Grid Background ───────────────────────────────────────── */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(37, 43, 69, 0.4) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37, 43, 69, 0.4) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ─── Glow Effects ──────────────────────────────────────────── */
+.glow-purple { box-shadow: var(--glow-purple); }
+.glow-blue   { box-shadow: var(--glow-blue); }
+.glow-green  { box-shadow: var(--glow-green); }
+
+/* ─── Animations ────────────────────────────────────────────── */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes slide-in-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes step-enter {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.animate-slide-up  { animation: slide-in-up 0.4s ease forwards; }
+.animate-fade-in   { animation: fade-in 0.3s ease forwards; }
+.animate-step      { animation: step-enter 0.3s ease forwards; }
+.animate-spin      { animation: spin 0.8s linear infinite; }
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+/* ─── Loading Shimmer ────────────────────────────────────────── */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bg-card) 25%,
+    var(--bg-elevated) 50%,
+    var(--bg-card) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ─── Gradient Button ───────────────────────────────────────── */
+.btn-gradient {
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-gradient::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.btn-gradient:hover::after { opacity: 1; }
+.btn-gradient:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4); }
+.btn-gradient:active { transform: translateY(0); }
+.btn-gradient:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* ─── Code Blocks ───────────────────────────────────────────── */
+.code-block {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* ─── Step Status Colors ────────────────────────────────────── */
+.status-pending  { color: var(--text-muted); }
+.status-running  { color: var(--accent-cyan); }
+.status-done     { color: var(--accent-green); }
+.status-warning  { color: var(--accent-orange); }
+.status-error    { color: var(--accent-red); }
+.status-skipped  { color: var(--text-secondary); }
+
+/* ─── Tab Pills ─────────────────────────────────────────────── */
+.tab-pill {
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+}
+
+.tab-pill.active {
+  background: linear-gradient(135deg, rgba(124,58,237,0.3), rgba(37,99,235,0.3));
+  border-color: var(--border-bright);
+  color: var(--text-primary);
+}
+
+.tab-pill:not(.active) {
+  color: var(--text-secondary);
+}
+
+.tab-pill:not(.active):hover {
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.04);
+}
