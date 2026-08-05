@@ -26,6 +26,7 @@ load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 DBT_MODELS_PATH = os.getenv("DBT_MODELS_PATH", "models/marts")
+MAX_REPAIR_ATTEMPTS = int(os.getenv("MAX_REPAIR_ATTEMPTS", "2"))
 
 
 def _event(step: str, status: str, message: str, data: dict | None = None) -> dict:
@@ -266,9 +267,96 @@ async def run_agent(nl_request: str) -> AsyncGenerator[dict, None]:
         # ─────────────────────────────────────────────────
         yield _event("validation", "running", "Validating generated SQL against DataHub schema…")
 
-        is_valid, validation_warnings = validate_sql_against_schema(
-            sql_content, relevant_datasets, model_name
-        )
+        repair_history = []
+        is_valid = False
+        validation_warnings = []
+
+        for attempt in range(MAX_REPAIR_ATTEMPTS + 1):
+            if attempt > 0:
+                yield _event(
+                    "validation",
+                    "running",
+                    f"Re-validating repaired SQL (attempt {attempt}/{MAX_REPAIR_ATTEMPTS})...",
+                )
+
+            is_valid, validation_warnings = validate_sql_against_schema(
+                sql_content, relevant_datasets, model_name
+            )
+
+            if is_valid:
+                break
+
+            if attempt >= MAX_REPAIR_ATTEMPTS:
+                break
+
+            repair_history.append({
+                "attempt": attempt + 1,
+                "warnings": validation_warnings,
+            })
+            yield _event(
+                "validation",
+                "warning",
+                f"Validation found {len(validation_warnings)} issue(s); asking Groq to repair SQL...",
+                {
+                    "valid": False,
+                    "warnings": validation_warnings,
+                    "repairAttempt": attempt + 1,
+                },
+            )
+
+            repair_response = client.chat.completions.create(
+                model=GROQ_MODEL,
+                max_tokens=4096,
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {
+                        "role": "user",
+                        "content": _build_repair_context(
+                            nl_request=nl_request,
+                            datasets=relevant_datasets,
+                            lineage_edges=unique_edges,
+                            glossary_terms=resolved_terms,
+                            parsed=parsed,
+                            validation_warnings=validation_warnings,
+                        ),
+                    },
+                ],
+            )
+
+            repaired = parse_llm_output(repair_response.choices[0].message.content)
+            if not repaired.get("sql"):
+                validation_warnings.append("Validation error: repair response did not include SQL.")
+                break
+
+            parsed = {**parsed, **repaired}
+            model_name = parsed.get("model_name") or slugify_model_name(nl_request)
+            model_name = re.sub(r"[^a-z0-9_]", "", model_name.lower())
+            sql_content = parsed.get("sql", "")
+            model_description = parsed.get("model_description", model_description)
+            llm_columns = parsed.get("columns", llm_columns)
+
+            yield _event("generation", "done",
+                f"Repaired model `{model_name}` after validation feedback",
+                {
+                    "modelName": model_name,
+                    "description": model_description,
+                    "sql": sql_content,
+                    "reasoning": parsed.get("reasoning", ""),
+                    "repairAttempt": attempt + 1,
+                }
+            )
+
+        if not is_valid:
+            yield _event("validation", "error",
+                f"Validation failed after {MAX_REPAIR_ATTEMPTS + 1} attempt(s); GitHub PR skipped.",
+                {
+                    "valid": False,
+                    "warnings": validation_warnings,
+                    "repairHistory": repair_history,
+                    "sql": sql_content,
+                }
+            )
+            return
 
         # Generate the schema YAML using DataHub column metadata
         # Use LLM columns as base, enriched with DataHub metadata
@@ -286,6 +374,7 @@ async def run_agent(nl_request: str) -> AsyncGenerator[dict, None]:
                 "valid": is_valid,
                 "warnings": validation_warnings,
                 "yaml": yaml_content,
+                "repairHistory": repair_history,
             }
         )
 
@@ -474,6 +563,43 @@ def _build_llm_context(
 Generate a dbt model that fulfills the request using ONLY the datasets and columns listed above.
 Use ref() for dbt models, source() for raw tables.
 Return JSON as specified in the system prompt.
+"""
+
+
+def _build_repair_context(
+    nl_request: str,
+    datasets: list[dict],
+    lineage_edges: list[dict],
+    glossary_terms: list[dict],
+    parsed: dict,
+    validation_warnings: list[str],
+) -> str:
+    """Build a focused prompt that asks the LLM to repair invalid SQL."""
+    existing_json = {
+        "model_name": parsed.get("model_name"),
+        "model_description": parsed.get("model_description"),
+        "sql": parsed.get("sql"),
+        "columns": parsed.get("columns", []),
+        "reasoning": parsed.get("reasoning", ""),
+    }
+    warnings_text = "\n".join(f"- {warning}" for warning in validation_warnings)
+
+    return f"""{_build_llm_context(nl_request, datasets, lineage_edges, glossary_terms)}
+
+## Validation Feedback
+The generated dbt model failed validation. Fix the SQL and column metadata so every ref/source/table
+and every qualified column is present in the DataHub schema context.
+
+Validation issues:
+{warnings_text}
+
+## Current Generated JSON
+```json
+{json.dumps(existing_json, indent=2)}
+```
+
+Return the full corrected JSON object in the exact format required by the system prompt.
+Keep the model grounded in the listed DataHub datasets only.
 """
 
 
