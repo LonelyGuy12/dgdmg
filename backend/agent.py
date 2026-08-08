@@ -20,7 +20,6 @@ from dbt_generator import (
     slugify_model_name,
 )
 from github_client import GitHubClient, build_pr_description
-from datahub_writeback import DataHubWriteBackClient, build_write_back_payload
 
 load_dotenv()
 
@@ -76,7 +75,6 @@ async def run_agent(nl_request: str) -> AsyncGenerator[dict, None]:
     """
     mcp = DataHubMCPClient()
     github = None
-    writeback_client = DataHubWriteBackClient()
 
     try:
         # ─────────────────────────────────────────────────
@@ -463,35 +461,6 @@ async def run_agent(nl_request: str) -> AsyncGenerator[dict, None]:
             }
         )
 
-        # ─────────────────────────────────────────────────
-        # STEP 8: DataHub Write-Back
-        # ─────────────────────────────────────────────────
-        yield _event("writeback", "running",
-            "Registering generated model and lineage in DataHub…"
-        )
-        wb_payload = build_write_back_payload(
-            model_name=model_name,
-            model_description=model_description,
-            datasets_used=relevant_datasets,
-            pr_url=pr["url"],
-            columns=schema_columns,
-        )
-        wb_result = await writeback_client.write_back(wb_payload)
-        wb_status = "warning" if wb_result.get("errors") else "done"
-        wb_msg = (
-            f"Model `{model_name}` registered in DataHub with "
-            f"{wb_result.get('lineage_edges_written', 0)} upstream lineage edge(s)"
-            + (" (mock)" if wb_result.get("mock") else "")
-        )
-        yield _event("writeback", wb_status, wb_msg, {
-            "modelUrn": wb_payload.model_urn,
-            "lineageEdges": wb_result.get("lineage_edges_written", 0),
-            "upstreamUrns": wb_payload.upstream_urns,
-            "entityUpserted": wb_result.get("entity_upserted", False),
-            "errors": wb_result.get("errors", []),
-            "mock": wb_result.get("mock", False),
-        })
-
     except Exception as e:
         import traceback
         yield _event("error", "error", f"Agent error: {str(e)}", {
@@ -501,7 +470,6 @@ async def run_agent(nl_request: str) -> AsyncGenerator[dict, None]:
         await mcp.close()
         if github:
             await github.close()
-        await writeback_client.close()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
