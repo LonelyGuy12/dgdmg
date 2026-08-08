@@ -57,6 +57,22 @@ def extract_sources(sql: str) -> set[str]:
     }
 
 
+def extract_source_tables(sql: str) -> list[str]:
+    """
+    Return a deduplicated, sorted list of all table names referenced in a dbt SQL model.
+
+    Covers both:
+    - ``{{ ref('model_name') }}`` calls
+    - ``{{ source('schema', 'table_name') }}`` calls
+
+    This is the primary helper for the DataHub write-back step to enumerate
+    which upstream datasets need lineage edges.
+    """
+    _, refs = extract_identifiers(sql)
+    sources = extract_sources(sql)
+    return sorted(refs | sources)
+
+
 def validate_sql_against_schema(
     sql: str,
     datasets: list[dict],
