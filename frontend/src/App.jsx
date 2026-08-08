@@ -13,6 +13,7 @@ const STEPS_CONFIG = [
   { id: 'generation', icon: '🤖',  label: 'LLM Generation',      description: 'Generating SQL + YAML' },
   { id: 'validation', icon: '✅',  label: 'Validation',          description: 'Validating identifiers' },
   { id: 'github',     icon: '🚀',  label: 'GitHub PR',           description: 'Creating pull request' },
+  { id: 'writeback',  icon: '📡',  label: 'DataHub Write-Back',  description: 'Registering model + lineage' },
 ]
 
 export default function App() {

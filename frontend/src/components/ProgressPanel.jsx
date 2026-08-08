@@ -9,6 +9,7 @@ const STEP_META = {
   generation: { icon: '🤖', label: 'LLM Generation',       color: '#c084fc' },
   validation: { icon: '✅', label: 'Validation',            color: '#10b981' },
   github:     { icon: '🚀', label: 'GitHub PR',            color: '#f97316' },
+  writeback:  { icon: '📡', label: 'DataHub Write-Back',   color: '#22d3ee' },
 }
 
 export default function ProgressPanel({ steps }) {
@@ -250,6 +251,67 @@ function StepDetails({ stepId, data }) {
         {data.warnings?.map((w, i) => (
           <div key={i} style={{ fontSize: 11, color: '#f59e0b' }}>{w}</div>
         ))}
+      </div>
+    )
+  }
+
+  if (stepId === 'writeback') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {data.modelUrn && (
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+            <span style={{ color: 'var(--text-muted)', marginRight: 6 }}>URN</span>
+            <code style={{
+              color: '#22d3ee', fontSize: 10,
+              fontFamily: 'JetBrains Mono, monospace',
+              wordBreak: 'break-all',
+            }}>
+              {data.modelUrn}
+            </code>
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 11, color: '#10b981' }}>
+            ✓ Entity upserted
+          </span>
+          {data.lineageEdges > 0 && (
+            <span style={{ fontSize: 11, color: '#a78bfa' }}>
+              🔗 {data.lineageEdges} upstream lineage edge{data.lineageEdges !== 1 ? 's' : ''}
+            </span>
+          )}
+          {data.mock && (
+            <span style={{
+              fontSize: 10, padding: '1px 6px', borderRadius: 4,
+              background: 'rgba(34,211,238,0.1)', color: '#22d3ee',
+              fontWeight: 600,
+            }}>
+              MOCK
+            </span>
+          )}
+        </div>
+        {data.upstreamUrns?.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2 }}>
+            <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 2 }}>
+              UPSTREAM DATASETS
+            </div>
+            {data.upstreamUrns.slice(0, 4).map((urn, i) => (
+              <div key={i} style={{
+                fontSize: 10, color: 'var(--text-muted)',
+                fontFamily: 'JetBrains Mono, monospace',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>
+                {urn.split(',')[1] || urn}
+              </div>
+            ))}
+          </div>
+        )}
+        {data.errors?.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {data.errors.map((err, i) => (
+              <div key={i} style={{ fontSize: 11, color: '#ef4444' }}>⚠ {err}</div>
+            ))}
+          </div>
+        )}
       </div>
     )
   }
