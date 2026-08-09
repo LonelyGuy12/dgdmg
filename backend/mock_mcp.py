@@ -12,8 +12,9 @@ MOCK_DIR = Path(__file__).parent.parent / "mock-data"
 
 
 def _load(filename: str) -> Any:
-    with open(MOCK_DIR / filename) as f:
+    with open(MOCK_DIR / filename, encoding="utf-8") as f:
         return json.load(f)
+
 
 
 def _save(filename: str, data: Any) -> None:
