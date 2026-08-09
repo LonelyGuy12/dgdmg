@@ -16,6 +16,15 @@ USE_MOCK = os.getenv("USE_MOCK_MCP", "true").lower() == "true"
 DATAHUB_MCP_URL = os.getenv("DATAHUB_MCP_URL", "")
 DATAHUB_TOKEN = os.getenv("DATAHUB_TOKEN", "")
 
+# Tool names used for write-back; override if your DataHub MCP server differs.
+DATAHUB_WRITE_DATASET_TOOL = os.getenv("DATAHUB_WRITE_DATASET_TOOL", "upsert_dataset_v2")
+DATAHUB_WRITE_LINEAGE_TOOL = os.getenv("DATAHUB_WRITE_LINEAGE_TOOL", "upsert_lineage")
+
+
+def _build_dataset_urn(platform: str, name: str, env: str = "PROD") -> str:
+    """Build a DataHub-style dataset URN."""
+    return f"urn:li:dataset:(urn:li:dataPlatform:{platform},{name},{env})"
+
 
 class DataHubMCPClient:
     """
@@ -111,6 +120,123 @@ class DataHubMCPClient:
             return await self._client.get_pii_columns()
         result = await self.search("tag:PII", entity_type="DATASET", limit=50)
         return result
+
+    # ─────────────────────────────────────────────────────────────────────
+    # register_dataset — write a generated model back into DataHub
+    # ─────────────────────────────────────────────────────────────────────
+    async def register_dataset(self, dataset: dict) -> dict:
+        """
+        Register (upsert) a dataset in DataHub.
+
+        In mock mode: mutates the in-memory MockMCPClient catalog.
+        In real mode: calls the DataHub MCP write tool (DATAHUB_WRITE_DATASET_TOOL).
+
+        Args:
+            dataset: dict with at minimum keys:
+                name, platform, schema, description, fields, tags
+
+        Returns:
+            {"registered": True, "urn": <urn>, "name": <name>}
+        """
+        if self._is_mock:
+            return await self._client.register_dataset(dataset)
+
+        # Real DataHub path — build the MCP upsert payload
+        name = dataset["name"]
+        platform = dataset.get("platform", "dbt")
+        urn = dataset.get("urn") or _build_dataset_urn(platform, name)
+
+        schema_fields = [
+            {
+                "fieldPath": f["name"],
+                "type": {"type": {"com.linkedin.schema.StringType": {}}},
+                "nativeDataType": f.get("type", "VARCHAR"),
+                "description": f.get("description", ""),
+                "tags": {"tags": [{"tag": f"urn:li:tag:{t}"} for t in f.get("tags", [])]},
+            }
+            for f in dataset.get("fields", [])
+        ]
+
+        payload = {
+            "urn": urn,
+            "aspects": {
+                "datasetProperties": {
+                    "name": name,
+                    "description": dataset.get("description", ""),
+                    "customProperties": {"generated_by": "dbt-generator"},
+                },
+                "schemaMetadata": {
+                    "schemaName": name,
+                    "platform": f"urn:li:dataPlatform:{platform}",
+                    "version": 0,
+                    "fields": schema_fields,
+                    "hash": "",
+                    "platformSchema": {"com.linkedin.schema.OtherSchema": {"rawSchema": ""}},
+                },
+                "globalTags": {
+                    "tags": [
+                        {"tag": f"urn:li:tag:{t}"}
+                        for t in list(set(dataset.get("tags", []) + ["GENERATED"]))
+                    ]
+                },
+            },
+        }
+        result = await self._call_tool(DATAHUB_WRITE_DATASET_TOOL, payload)
+        return {"registered": True, "urn": urn, "name": name, "raw": result}
+
+    # ─────────────────────────────────────────────────────────────────────
+    # add_lineage — write upstream lineage edges into DataHub
+    # ─────────────────────────────────────────────────────────────────────
+    async def add_lineage(
+        self,
+        upstream_name: str,
+        downstream_name: str,
+        transformation_type: str = "DBT_MODEL",
+        transformation_query: str = "",
+    ) -> dict:
+        """
+        Add a lineage edge from upstream_name → downstream_name in DataHub.
+
+        In mock mode: mutates the in-memory MockMCPClient lineage graph.
+        In real mode: calls the DataHub MCP write tool (DATAHUB_WRITE_LINEAGE_TOOL).
+
+        Returns:
+            {"added": True/False, "edge": {upstream, downstream, ...}}
+        """
+        if self._is_mock:
+            return await self._client.add_lineage(
+                upstream_name, downstream_name, transformation_type, transformation_query
+            )
+
+        # Real DataHub path — build a DataHub lineage aspect payload
+        upstream_urn   = _build_dataset_urn("dbt", upstream_name)
+        downstream_urn = _build_dataset_urn("dbt", downstream_name)
+
+        payload = {
+            "urn": downstream_urn,
+            "aspects": {
+                "upstreamLineage": {
+                    "upstreams": [
+                        {
+                            "dataset": upstream_urn,
+                            "type": transformation_type,
+                            "query": transformation_query[:4000],  # DataHub field limit
+                        }
+                    ]
+                }
+            },
+        }
+        result = await self._call_tool(DATAHUB_WRITE_LINEAGE_TOOL, payload)
+        return {
+            "added": True,
+            "duplicate": False,
+            "edge": {
+                "upstream": upstream_urn,
+                "downstream": downstream_urn,
+                "transformationType": transformation_type,
+            },
+            "raw": result,
+        }
 
     async def close(self):
         if not self._is_mock:
