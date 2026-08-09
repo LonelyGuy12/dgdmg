@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 
 const STEP_META = {
-  schema:     { icon: '🗄️', label: 'Schema Lookup',        color: '#60a5fa' },
-  lineage:    { icon: '🔗', label: 'Lineage Fetch',        color: '#a78bfa' },
-  glossary:   { icon: '📖', label: 'Glossary Resolution',  color: '#34d399' },
-  governance: { icon: '🏷️', label: 'Tags & Assertions',    color: '#f59e0b' },
-  generation: { icon: '🤖', label: 'LLM Generation',       color: '#c084fc' },
-  validation: { icon: '✅', label: 'Validation',            color: '#10b981' },
-  github:     { icon: '🚀', label: 'GitHub PR',            color: '#f97316' },
+  schema:            { icon: '🗄️', label: 'Schema Lookup',        color: '#60a5fa' },
+  lineage:           { icon: '🔗', label: 'Lineage Fetch',        color: '#a78bfa' },
+  glossary:          { icon: '📖', label: 'Glossary Resolution',  color: '#34d399' },
+  governance:        { icon: '🏷️', label: 'Tags & Assertions',    color: '#f59e0b' },
+  generation:        { icon: '🤖', label: 'LLM Generation',       color: '#c084fc' },
+  validation:        { icon: '✅', label: 'Validation',            color: '#10b981' },
+  github:            { icon: '🚀', label: 'GitHub PR',            color: '#f97316' },
+  datahub_writeback: { icon: '📡', label: 'DataHub Write-Back',   color: '#22d3ee' },
 }
 
 export default function ProgressPanel({ steps }) {
@@ -250,6 +251,31 @@ function StepDetails({ stepId, data }) {
         {data.warnings?.map((w, i) => (
           <div key={i} style={{ fontSize: 11, color: '#f59e0b' }}>{w}</div>
         ))}
+      </div>
+    )
+  }
+
+  if (stepId === 'datahub_writeback') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {data.urn && (
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+            <span style={{ color: 'var(--text-muted)', marginRight: 6 }}>URN</span>
+            <code style={{
+              color: '#22d3ee', fontSize: 10,
+              fontFamily: 'JetBrains Mono, monospace',
+              wordBreak: 'break-all',
+            }}>
+              {data.urn}
+            </code>
+          </div>
+        )}
+        {data.lineageEdges?.length > 0 && (
+          <div style={{ fontSize: 11, color: '#a78bfa' }}>
+            🔗 Added {data.lineageEdges.length} lineage edge(s):{' '}
+            {data.lineageEdges.map(e => e.upstream).join(', ')}
+          </div>
+        )}
       </div>
     )
   }

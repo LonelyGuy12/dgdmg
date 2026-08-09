@@ -6,13 +6,14 @@ import ArtifactPreview from './components/ArtifactPreview'
 import PRResult from './components/PRResult'
 
 const STEPS_CONFIG = [
-  { id: 'schema',     icon: '🗄️',  label: 'Schema Lookup',       description: 'Querying DataHub catalog' },
-  { id: 'lineage',    icon: '🔗',  label: 'Lineage Fetch',       description: 'Tracing data lineage' },
-  { id: 'glossary',   icon: '📖',  label: 'Glossary Resolution', description: 'Resolving business terms' },
-  { id: 'governance', icon: '🏷️',  label: 'Tags & Assertions',   description: 'Checking PII & quality' },
-  { id: 'generation', icon: '🤖',  label: 'LLM Generation',      description: 'Generating SQL + YAML' },
-  { id: 'validation', icon: '✅',  label: 'Validation',          description: 'Validating identifiers' },
-  { id: 'github',     icon: '🚀',  label: 'GitHub PR',           description: 'Creating pull request' },
+  { id: 'schema',            icon: '🗄️',  label: 'Schema Lookup',       description: 'Querying DataHub catalog' },
+  { id: 'lineage',           icon: '🔗',  label: 'Lineage Fetch',       description: 'Tracing data lineage' },
+  { id: 'glossary',          icon: '📖',  label: 'Glossary Resolution', description: 'Resolving business terms' },
+  { id: 'governance',        icon: '🏷️',  label: 'Tags & Assertions',   description: 'Checking PII & quality' },
+  { id: 'generation',        icon: '🤖',  label: 'LLM Generation',      description: 'Generating SQL + YAML' },
+  { id: 'validation',        icon: '✅',  label: 'Validation',          description: 'Validating identifiers' },
+  { id: 'github',            icon: '🚀',  label: 'GitHub PR',           description: 'Creating pull request' },
+  { id: 'datahub_writeback', icon: '📡',  label: 'DataHub Write-Back',  description: 'Registering model + lineage' },
 ]
 
 export default function App() {
