@@ -1,10 +1,15 @@
 <div align="center">
-  <h1>🔗 dgdmg — DataHub-Grounded dbt Model Generator</h1>
-  <p><strong>Turn plain English into validated dbt models — grounded in real DataHub metadata, registered back into the catalog, and shipped as a GitHub PR.</strong></p>
-  [![Hackathon](https://img.shields.io/badge/Hackathon-Build%20with%20DataHub-6f42c1.svg?style=for-the-badge)](#)
-  [![Groq](https://img.shields.io/badge/LLM-Groq%20Llama%203.3-orange.svg?style=for-the-badge)](#-what-it-does)
-  [![DataHub](https://img.shields.io/badge/Grounded%20by-DataHub%20MCP-blue.svg?style=for-the-badge)](#%EF%B8%8F-how-datahub-grounding-prevents-hallucinations)
+
+# 🔗 dgdmg — DataHub-Grounded dbt Model Generator
+
+**Turn plain English into validated dbt models — grounded in real DataHub metadata, registered back into the catalog, and shipped as a GitHub PR.**
+
+[![Hackathon](https://img.shields.io/badge/Hackathon-Build%20with%20DataHub-6f42c1.svg?style=for-the-badge)](#)
+[![Groq](https://img.shields.io/badge/LLM-Groq%20Llama%203.3-orange.svg?style=for-the-badge)](#-what-it-does)
+[![DataHub](https://img.shields.io/badge/Grounded%20by-DataHub%20MCP-blue.svg?style=for-the-badge)](#how-datahub-grounding-prevents-hallucinations)
+
 </div>
+
 ---
  
 Built for **"Build with DataHub: The Agent Hackathon"**
@@ -74,10 +79,12 @@ flowchart TD
     D -->|Invalid: repair| C
     D -->|Valid| E[GitHub PR + DataHub Write-Back]
     E --> F[React UI]
-
-    style A fill:#e1e1e1
-    style E fill:#ffd6b3
-    style F fill:#e1e1e1
+    style A fill:#1e1e2e,color:#cdd6f4,stroke:#89b4fa
+    style B fill:#181825,color:#cdd6f4,stroke:#7c3aed
+    style C fill:#181825,color:#cdd6f4,stroke:#f97316
+    style D fill:#181825,color:#cdd6f4,stroke:#a78bfa
+    style E fill:#181825,color:#cdd6f4,stroke:#89b4fa
+    style F fill:#1e1e2e,color:#cdd6f4,stroke:#89b4fa
 ```
 
 ---
