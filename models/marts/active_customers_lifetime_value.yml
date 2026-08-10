@@ -1,0 +1,30 @@
+version: 2
+models:
+- name: active_customers_lifetime_value
+  description: List all active customers and their total lifetime value
+  columns:
+  - name: customer_id
+    description: Unique customer identifier
+    tests:
+    - not_null
+    - unique
+  - name: first_name
+    description: Customer first name PII/Sensitive column - handle with care.
+    meta:
+      datahub_tags:
+      - PII
+  - name: last_name
+    description: Customer last name PII/Sensitive column - handle with care.
+    meta:
+      datahub_tags:
+      - PII
+  - name: email_hash
+    description: SHA-256 hashed email (PII-safe)
+  - name: signup_date
+    description: Account creation date
+  - name: country
+    description: Customer country code
+  - name: is_active
+    description: True if customer has purchased in last 90 days
+  - name: lifetime_value
+    description: Customer lifetime value
