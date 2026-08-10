@@ -1,3 +1,4 @@
+
 <div align="center">
 
 # 🔗 dgdmg — DataHub-Grounded dbt Model Generator
@@ -26,17 +27,17 @@ Built for **"Build with DataHub: The Agent Hackathon"**
 
 **Video walkthrough:** [(https://www.youtube.com/shorts/usZ7-DJBVkg)]
 
-**Live progress stream:**
+**Landing Page:**
 
-![Progress panel screenshot](TODO_replace_with_screenshot_url.png)
+<img width="1893" height="811" alt="Screenshot 2026-08-10 234736" src="https://github.com/user-attachments/assets/665e38f4-9acd-4107-81d5-b0a92553e739" />
+
+**Analysis result:**
+
+<img width="1778" height="887" alt="Screenshot 2026-08-11 000843" src="https://github.com/user-attachments/assets/e9c83f65-bb50-46b2-b491-17064e8ed0fb" />
 
 **Generated SQL + YAML preview:**
 
-![Artifact preview screenshot](TODO_replace_with_screenshot_url.png)
-
-**PR result:**
-
-![PR result screenshot](TODO_replace_with_screenshot_url.png)
+<img width="1430" height="878" alt="Screenshot 2026-08-11 001454" src="https://github.com/user-attachments/assets/2f621ffb-0315-46eb-8d69-93d7bb7c634b" />
 
 ---
 
