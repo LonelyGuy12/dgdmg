@@ -1,0 +1,25 @@
+version: 2
+models:
+- name: orders_with_ltv_active_accounts
+  description: Join orders with customer lifetime value, filtered to active accounts
+  columns:
+  - name: order_id
+    description: Unique order identifier
+    tests:
+    - not_null
+    - unique
+  - name: customer_id
+    description: Customer foreign key
+    tests:
+    - not_null
+    - relationships:
+        to: ref('dim_customers')
+        field: customer_id
+  - name: order_date
+    description: Date the order was placed
+  - name: status
+    description: Normalized order status
+  - name: net_amount
+    description: Order amount after discount
+  - name: lifetime_value
+    description: Customer lifetime value
