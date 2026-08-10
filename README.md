@@ -24,7 +24,7 @@ Built for **"Build with DataHub: The Agent Hackathon"**
 
 ## 🎥 Demo
 
-**Video walkthrough:** [TODO: replace with demo video URL]
+**Video walkthrough:** [(https://www.youtube.com/shorts/usZ7-DJBVkg)]
 
 **Live progress stream:**
 
