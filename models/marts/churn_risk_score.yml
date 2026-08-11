@@ -1,0 +1,18 @@
+version: 2
+models:
+- name: churn_risk_score
+  description: Calculates the churn risk score for customers based on the recency
+    of their last order
+  columns:
+  - name: customer_id
+    description: Unique customer identifier
+    tests:
+    - not_null
+    - unique
+  - name: is_active
+    description: Whether the customer is active (purchased in last 90 days)
+  - name: last_order_date
+    description: Date of the customer's most recent order
+  - name: churn_risk_score
+    description: Churn risk score for the customer based on the recency of their last
+      order
