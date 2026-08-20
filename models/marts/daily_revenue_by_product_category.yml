@@ -1,0 +1,11 @@
+version: 2
+models:
+- name: daily_revenue_by_product_category
+  description: Calculates daily revenue by product category, excluding cancelled orders
+  columns:
+  - name: order_date
+    description: Date of the order
+  - name: product_category
+    description: Top-level grouping for products in the catalog
+  - name: daily_revenue
+    description: Total revenue for the day, excluding cancelled orders
